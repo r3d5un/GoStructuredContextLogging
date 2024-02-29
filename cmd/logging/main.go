@@ -38,4 +38,36 @@ func main() {
 			slog.Int("droid_id", 2),
 		),
 	)
+
+	// child loggers
+	childLogger := logger.With(
+		slog.Group(
+			"inside",
+			slog.String("thing", "oh, yeah!"),
+		),
+	)
+
+	// child loggers include properties from it's declaration
+	childLogger.Info("omg, somethings inside me!")
+
+	// this is useful of embedding and grouping contextual data
+	// without having to write repetitive log statements
+	childLogger = logger.With(
+		slog.Group(
+			"request",
+			"method", "GET",
+			"path", "/totally/a/real/path",
+			"request_id", 1234,
+		),
+	)
+	childLogger.Info("request context embedded")
+
+	// embed all attributes as part of a group
+	loggerWithGroup := slog.New(handler).WithGroup("some_group")
+	child := loggerWithGroup.With(
+		slog.Int("some_number", 9876),
+		slog.Int("another_number", 5432),
+	)
+
+	child.Info("some_statement")
 }
