@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+type ContextKey string
+
+const LoggerKey ContextKey = "logger"
+
 func main() {
 	handler := slog.NewJSONHandler(os.Stdout, nil)
 	logger := slog.New(handler)
@@ -70,4 +74,33 @@ func main() {
 	)
 
 	child.Info("some_statement")
+
+	// embed logger in application context
+	ctx := WithLogger(context.Background(), child)
+
+	// using logger in another function
+	UseEmbeddedLogger(ctx)
+}
+
+// Embeds a logger in the given context.
+func WithLogger(ctx context.Context, logger *slog.Logger) context.Context {
+	return context.WithValue(ctx, LoggerKey, logger)
+}
+
+// LoggerFromContext attempts to extract an embedded logger from the
+// given context. If no context is found, it returns the default logger
+// registered for the application.
+func LoggerFromContext(ctx context.Context) *slog.Logger {
+	logger, ok := ctx.Value(LoggerKey).(*slog.Logger)
+	if !ok {
+		return slog.Default()
+	}
+	return logger
+}
+
+// Retrieves and uses the logger embedded in the context
+func UseEmbeddedLogger(ctx context.Context) {
+	logger := LoggerFromContext(ctx)
+
+	logger.Info("omg, where am I?")
 }
